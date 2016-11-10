@@ -1,0 +1,301 @@
+package geeone.ezpz;
+
+import android.app.ActivityManager;
+import android.app.Service;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Binder;
+import android.os.Bundle;
+import android.os.IBinder;
+import android.os.ResultReceiver;
+import android.support.annotation.NonNull;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ServerValue;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageMetadata;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
+import DatabaseStructure.FileMetadata;
+
+/**
+ * Created by YamTai on 7.10.16.
+ */
+
+@SuppressWarnings({"FieldCanBeLocal", "DefaultFileTemplate"})
+public class FirebaseServices extends Service {
+
+    //  result receiver variables
+    public static final int AUTHENTICATE_RESULT_CODE = 0;
+    public static final String AUTHENTICATE_RESULT_DATA = "geeone.ezpz.AUTHENTICATE_RESULT_DATA";
+    public static final int AUTHENTICATE_REGISTER_CODE = 1;
+    public static final String AUTHENTICATE_REGISTER_DATA = "geeone.ezpz.AUTHENTICATE_REGISTER_DATA";
+    public static final int UPLOAD_RESULT_CODE = 2;
+    public static final String UPLOAD_RESULT_DATA = "geeone.ezpz.UPLOAD_RESULT_DATA";
+    public static final int METADATA_FETCH_RESULT_CODE = 3;
+    public static final String METADATA_FETCH_RESULT_DATA = "geeone.ezpz.METADATA_FETCH_RESULT_DATA";
+    public static final int DELETE_RESULT_CODE = 4;
+    public static final String DELETE_RESULT_DATA = "geeone.ezpz.DELETE_RESULT_DATA";
+
+    //  firebase bucket stuff
+    private final String BUCKET_REF = "gs://ezpz-23b89.appspot.com";
+    //  firebase database stuff
+    private final String DB_ROOT = "users";
+    private final String DB_FILES = "files";
+    private final String DB_LOGS = "logs";
+    private final String DB_PRESENCE = "presence";
+    private final String ACTION_CONNECT = "connect";
+    private final String ACTION_DISCONNECT = "disconnect";
+    private final String ACTION_CREATE = "create";
+    private final String ACTION_DELETE = "delete";
+
+    private final IBinder mBinder = new LocalBinder();
+
+    private String userId;
+    private ResultReceiver mResultReceiver;
+    private FirebaseAuth mAuth;
+    @SuppressWarnings("unused")
+    private FirebaseAuth.AuthStateListener mAuthListener;
+    private FirebaseStorage mStorage;
+    private DatabaseReference mDatabaseRef;
+    private StorageReference mStorageRef;
+
+    private Map<String, Object> fileMetadata;
+
+    public class LocalBinder extends Binder {
+        FirebaseServices getService(){
+            return FirebaseServices.this;
+        }
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        if (!RootChecker.isDeviceRooted()){
+            mAuth = FirebaseAuth.getInstance();
+            mDatabaseRef = FirebaseDatabase.getInstance().getReference().child(DB_ROOT);
+            mStorage = FirebaseStorage.getInstance();
+            mAuthListener = new FirebaseAuth.AuthStateListener() {
+                @Override
+                public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                    FirebaseUser user = firebaseAuth.getCurrentUser();
+                    ActivityManager am = (ActivityManager)getApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
+                    @SuppressWarnings("deprecation")
+                    ComponentName cn = am.getRunningTasks(1).get(0).topActivity;
+                    //noinspection StatementWithEmptyBody
+                    if (user != null) {
+                        // User is signed in
+                    } else {
+                        // User is signed out
+                        userId = null;
+                        if (!cn.getClassName().equals("LoginActivity")){
+                            Intent i = new Intent(getApplicationContext(), LoginActivity.class);
+                            startActivity(i);
+                        }
+                    }
+                }
+            };
+            return mBinder;
+        }else{
+            return null;
+        }
+    }
+
+    public void register(String email, String password, ResultReceiver rr){
+        mResultReceiver = rr;
+        if (mAuth != null){
+            mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                @Override
+                public void onComplete(@NonNull Task<AuthResult> task) {
+                    if (mResultReceiver != null) {
+                        Bundle result = new Bundle();
+                        if (task.isSuccessful()) {
+                            result.putBoolean(AUTHENTICATE_REGISTER_DATA, true);
+                        }else{
+                            result.putBoolean(AUTHENTICATE_REGISTER_DATA, false);
+                        }
+                        mResultReceiver.send(AUTHENTICATE_REGISTER_CODE, result);
+                    }
+                }
+            });
+        }
+    }
+
+    public void authenticate(String email, String password, ResultReceiver rr){
+        mResultReceiver = rr;
+        if (mAuth != null){
+            mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                @Override
+                public void onComplete(@NonNull Task<AuthResult> task) {
+                    if (mResultReceiver != null) {
+                        Bundle result = new Bundle();
+                        if (task.isSuccessful()) {
+                            FirebaseUser user = mAuth.getCurrentUser();
+                            assert user != null;
+                            userId = user.getUid();
+                            mDatabaseRef = mDatabaseRef.child(userId);
+                            mStorageRef = mStorage.getReferenceFromUrl(BUCKET_REF).child(userId);
+                            setPresence(true);
+                            log(ACTION_CONNECT, null);
+                            result.putBoolean(AUTHENTICATE_RESULT_DATA, true);
+                        }else{
+                            result.putBoolean(AUTHENTICATE_RESULT_DATA, false);
+                            userId = null;
+                        }
+                        mResultReceiver.send(AUTHENTICATE_RESULT_CODE, result);
+                    }
+                }
+            });
+        }
+    }
+
+    public void upload(Uri imageUri, boolean deleteOnDC, ResultReceiver rr) {
+        final boolean deleteOnDisconnect = deleteOnDC;
+        mResultReceiver = rr;
+        if (mStorageRef != null){
+            if (imageUri != null){
+                final StorageReference sRef = mStorageRef.child(imageUri.getLastPathSegment());
+                UploadTask uTask = sRef.putFile(imageUri);
+                final Bundle result = new Bundle();
+                uTask.addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        result.putBoolean(UPLOAD_RESULT_DATA, false);
+                        mResultReceiver.send(UPLOAD_RESULT_CODE, result);
+                    }
+                }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                    if (mDatabaseRef != null){
+                        final DatabaseReference dRef = mDatabaseRef.child(DB_FILES).child(sRef.getName());
+                        sRef.getMetadata().addOnSuccessListener(new OnSuccessListener<StorageMetadata>() {
+                            @Override
+                            public void onSuccess(StorageMetadata storageMetadata) {
+                                //noinspection ConstantConditions
+                                FileMetadata f = new FileMetadata(storageMetadata.getName(),
+                                            storageMetadata.getContentType(),
+                                            storageMetadata.getDownloadUrl().toString(),
+                                            "gs://" + storageMetadata.getBucket() + "/" + storageMetadata.getPath(),
+                                            storageMetadata.getSizeBytes(),
+                                            deleteOnDisconnect);
+                                dRef.setValue(f);
+                                log(ACTION_CREATE, storageMetadata.getName());
+                            }
+                        });
+                    }
+                    result.putBoolean(UPLOAD_RESULT_DATA, true);
+                    mResultReceiver.send(UPLOAD_RESULT_CODE, result);
+                    }
+                });
+            }
+        }
+    }
+
+    public void delete(@NonNull String fileName, ResultReceiver rr){
+        final String toDelete = fileName;
+        mResultReceiver = rr;
+        if (mStorageRef != null){
+            StorageReference sRef = mStorageRef.child(toDelete);
+            final Bundle result = new Bundle();
+            sRef.delete().addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    result.putBoolean(DELETE_RESULT_DATA, false);
+                    mResultReceiver.send(DELETE_RESULT_CODE, result);
+                }
+            }).addOnSuccessListener(new OnSuccessListener<Void>() {
+                @Override
+                public void onSuccess(Void aVoid) {
+                    if (mDatabaseRef != null) {
+                        DatabaseReference dRef = mDatabaseRef.child(DB_FILES).child(toDelete);
+                        dRef.removeValue();
+                        log(ACTION_DELETE, toDelete);
+                    }
+                    result.putBoolean(DELETE_RESULT_DATA, true);
+                    mResultReceiver.send(DELETE_RESULT_CODE, result);
+                }
+            });
+        }
+    }
+
+    public void logout(){
+        setPresence(false);
+        log(ACTION_DISCONNECT, null);
+        if (mAuth != null){
+            mAuth.signOut();
+        }
+        stopSelf();
+    }
+
+    private void log(@NonNull String action, String fileName){
+        if (mDatabaseRef != null){
+            DatabaseReference dRef = mDatabaseRef.child(DB_LOGS).push();
+            Map<String, Object> data = new HashMap<>();
+            data.put("actionBy", "user");
+            data.put("fileName", fileName);
+            data.put("actionType", action);
+            data.put("timestamp", ServerValue.TIMESTAMP);
+            dRef.setValue(data);
+        }
+    }
+
+    private void setPresence(boolean online){
+        if (mDatabaseRef != null){
+            DatabaseReference dRef = mDatabaseRef.child(DB_PRESENCE);
+            dRef.setValue(online);
+        }
+    }
+
+    public void startMetadataListener(ResultReceiver rr){
+        mResultReceiver = rr;
+        DatabaseReference dRef = mDatabaseRef.child(DB_FILES);
+        ValueEventListener valueListener =  new ValueEventListener() {
+            @Override
+            @SuppressWarnings("unchecked")
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                fileMetadata = (Map<String, Object>) dataSnapshot.getValue();
+                ArrayList<FileMetadata> resultPayload = new ArrayList<>();
+                Bundle result = new Bundle();
+                if (fileMetadata != null){
+                    for(Object o : fileMetadata.values()){
+                        Map<String, Object> m = (Map<String, Object>) o;
+                        String fileName = (String) m.get(FileMetadata.NAME);
+                        String fileType = (String) m.get(FileMetadata.TYPE);
+                        String downloadUrl = (String) m.get(FileMetadata.URL);
+                        String storageDirectory = (String) m.get(FileMetadata.DIRECTORY);
+                        Long size = (Long) m.get(FileMetadata.SIZE);
+                        boolean deleteOnDisconnect = (boolean) m.get(FileMetadata.DELETE_ON_DC);
+                        if ((fileName != null) && (fileType != null) && (downloadUrl != null) && (size > 0)){
+                            FileMetadata fm = new FileMetadata(fileName, fileType, downloadUrl, storageDirectory, size, deleteOnDisconnect);
+                            resultPayload.add(fm);
+                        }
+                    }
+                }
+                result.putParcelableArrayList(METADATA_FETCH_RESULT_DATA, resultPayload);
+                mResultReceiver.send(METADATA_FETCH_RESULT_CODE, result);
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        };
+        dRef.addValueEventListener(valueListener);
+    }
+}

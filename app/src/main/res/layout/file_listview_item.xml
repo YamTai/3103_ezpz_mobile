@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="70dp"
+    android:paddingTop="5dp"
+    android:paddingBottom="10dp"
+    android:weightSum="10">
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:weightSum="10"
+        android:layout_weight="8" >
+        <TextView
+            android:text="@string/main_listItem_fileName"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:id="@+id/textView_fileName"
+            android:layout_weight="7" />
+        <TextView
+            android:text="@string/main_listItem_fileDetails"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:id="@+id/textView_fileMeta"
+            android:layout_weight="3" />
+    </LinearLayout>
+
+    <Button
+        android:text="@string/main_listItem_button_delete"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="2"
+        android:id="@+id/button_delete" />
+
+</LinearLayout>
