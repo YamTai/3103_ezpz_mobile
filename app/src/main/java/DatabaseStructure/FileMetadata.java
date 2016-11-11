@@ -14,9 +14,9 @@ public class FileMetadata implements Parcelable {
 
     public final String fileName, fileType, downloadUrl;
     @SuppressWarnings({"FieldCanBeLocal", "unused"})
-    private String fileDirectory;
+    public String fileDirectory;
     public final long size;
-    private final boolean deleteOnDisconnect;
+    public final boolean deleteOnDisconnect;
 
     public FileMetadata(String name, String type, String url, String fileDirectory, long size, boolean deleteOnDc){
         this.fileName = name;
