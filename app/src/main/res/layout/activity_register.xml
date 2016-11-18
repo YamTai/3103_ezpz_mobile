@@ -30,7 +30,7 @@
             android:inputType="textEmailAddress"
             android:hint="@string/login_emailHint"
             android:ems="10"
-            android:id="@+id/editText_login_email"/>
+            android:id="@+id/editText_register_email"/>
 
         <EditText
             android:layout_width="match_parent"
@@ -40,25 +40,39 @@
             android:inputType="textPassword"
             android:hint="@string/login_passwordHint"
             android:ems="10"
-            android:id="@+id/editText_login_password"/>
+            android:id="@+id/editText_register_password"/>
 
-        <Button
-            android:text="@string/login_loginButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:onClick="login"/>
-
-        <TextView
-            android:text="@string/login_textView_signUp"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingTop="10dp"
-            android:gravity="center"
-            android:onClick="goToRegister"
-            android:id="@+id/textView_login_register"
-            android:textAppearance="@android:style/TextAppearance.Material.Medium"
-            android:textColor="@color/colorLinks"/>
+            android:orientation="horizontal"
+            android:weightSum="12">
 
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="2"/>
+
+            <Button
+                android:text="@string/register_registerButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_weight="3"
+                android:onClick="register"/>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="2"/>
+
+            <Button
+                android:text="@string/register_clearButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="3"
+                android:onClick="clear"/>
+
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>

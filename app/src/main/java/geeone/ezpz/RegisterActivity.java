@@ -11,11 +11,12 @@ import android.os.ResultReceiver;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
-public class LoginActivity extends AppCompatActivity {
+public class RegisterActivity extends AppCompatActivity {
 
     private FirebaseServices mService;
     private ServiceConnection mConnection;
@@ -26,8 +27,8 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login);
-        setTitle(R.string.login_title);
+        setContentView(R.layout.activity_register);
+        setTitle(R.string.register_title);
 
         //  service connection to FirebaseServices
         mConnection = new ServiceConnection() {
@@ -47,8 +48,11 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onStart(){
         super.onStart();
-        mEmail = (EditText) findViewById(R.id.editText_login_email);
-        mPassword = (EditText) findViewById(R.id.editText_login_password);
+
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        mEmail = (EditText) findViewById(R.id.editText_register_email);
+        mPassword = (EditText) findViewById(R.id.editText_register_password);
 
         //  checks if phone is rooted
         if (!RootChecker.isDeviceRooted()){
@@ -72,25 +76,52 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onResume(){
-        super.onResume();
-        Intent i = new Intent(this, FirebaseServices.class);
-        startService(i);
-        bindService(i, mConnection, BIND_AUTO_CREATE);
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:{
+                goToLogin();
+            }
+            default:{
+                //  do nothing
+            }
+        }
+        return super.onOptionsItemSelected(item);
     }
 
-    @SuppressWarnings("UnusedParameters")
-    public void login(View v){
+    @Override
+    public void onBackPressed(){
+        super.onBackPressed();
         if (mBound){
-            if (validate()) {
-                mService.authenticate(mEmail.getText().toString(), mPassword.getText().toString(), new LoginResultReceiver(this, new Handler()));
-            }
+            unbindService(mConnection);
         }
     }
 
     @SuppressWarnings("UnusedParameters")
-    public void goToRegister(View v){
-        Intent i = new Intent(this, RegisterActivity.class);
+    public void register(View v){
+        if (mBound){
+            if (validate()){
+                String email = mEmail.getText().toString();
+                String password = mPassword.getText().toString();
+                mService.register(email, password, new RegistrationResultReceiver(this, new Handler()));
+            }
+        }
+    }
+
+    public void clear(View v){
+        if (mEmail != null){
+            mEmail.setText("");
+        }
+        if (mPassword != null){
+            mPassword.setText("");
+        }
+    }
+
+    private void goToLogin(){
+        Intent i = new Intent(this, LoginActivity.class);
+        i.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+        if (mBound){
+            unbindService(mConnection);
+        }
         startActivity(i);
     }
 
@@ -116,25 +147,22 @@ public class LoginActivity extends AppCompatActivity {
     /*
         description: custom resultreceiver for receiving results from FirebaseServices
      */
-    private class LoginResultReceiver extends ResultReceiver{
+    private class RegistrationResultReceiver extends ResultReceiver{
         private final Context context;
-        private LoginResultReceiver(Context c, Handler h){
+        private RegistrationResultReceiver(Context c, Handler h){
             super(h);
             context = c;
         }
         @Override
         public void onReceiveResult(int resultCode, Bundle resultData) {
             switch(resultCode){
-                case FirebaseServices.AUTHENTICATE_RESULT_CODE:{
-                    boolean authenticated = resultData.getBoolean(FirebaseServices.AUTHENTICATE_RESULT_DATA, false);
-                    if (authenticated){
-                        Toast.makeText(context, R.string.login_toast_login_success, Toast.LENGTH_SHORT).show();
-                        Intent i = new Intent(context, MainActivity.class);
-                        unbindService(mConnection);
-                        startActivity(i);
-                        finish();   //  remove from backstack
+                case FirebaseServices.AUTHENTICATE_REGISTER_CODE:{
+                    boolean registered = resultData.getBoolean(FirebaseServices.AUTHENTICATE_REGISTER_DATA, false);
+                    if (registered){
+                        Toast.makeText(context, R.string.register_toast_registration_success, Toast.LENGTH_SHORT).show();
+                        goToLogin();
                     }else{
-                        Toast.makeText(context, R.string.login_toast_login_fail, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, R.string.register_toast_registration_failed, Toast.LENGTH_SHORT).show();
                     }
                     break;
                 }

@@ -2,7 +2,6 @@
     <string name="app_name">ezpz</string>
     <string name="main_listItem_fileName">FileName</string>
     <string name="main_listItem_fileDetails">FileDetails</string>
-    <string name="main_listItem_button_delete">Remove</string>
     <string name="common_dialog_close">Close</string>
     <string name="common_dialog_yes">Yes</string>
     <string name="common_dialog_no">No</string>
@@ -13,9 +12,14 @@
     <string name="login_emailHint">Email address</string>
     <string name="login_passwordHint">Password</string>
     <string name="login_loginButton">Login</string>
-    <string name="login_registerButton">Register</string>
+    <string name="register_title">Register</string>
+    <string name="register_registerButton">Register</string>
+    <string name="register_clearButton">Clear</string>
     <string name="login_toast_login_success">Logged in</string>
     <string name="login_toast_login_fail">Login failed</string>
+    <string name="login_textView_signUp">Sign up for new account</string>
+    <string name="register_toast_registration_success">Registration successful</string>
+    <string name="register_toast_registration_failed">Registration failed</string>
     <string name="main_title">File List</string>
     <string name="main_shareDialog_title">Share</string>
     <string name="main_shareConfigDialog_title">Share Configuration</string>
