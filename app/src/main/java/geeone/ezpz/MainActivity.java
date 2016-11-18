@@ -2,6 +2,7 @@ package geeone.ezpz;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.ComponentName;
@@ -48,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
 
     private ArrayList<FileMetadata> mFileMetadataList;
     private FileListViewAdapter mAdapter;
+    private ProgressDialog uploadPd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -123,6 +125,12 @@ public class MainActivity extends AppCompatActivity {
      */
     private void upload(Uri imageUri, boolean removeOnDC){
         mService.upload(imageUri, removeOnDC, new MainReceiver(this, new Handler()));
+        uploadPd = new ProgressDialog(this);
+        uploadPd.setIndeterminate(true);
+        uploadPd.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        uploadPd.setCancelable(false);
+        uploadPd.setMessage(getString(R.string.main_progressDialog_uploading));
+        uploadPd.show();
     }
 
     /*
@@ -315,8 +323,10 @@ public class MainActivity extends AppCompatActivity {
                 case FirebaseServices.UPLOAD_RESULT_CODE:{
                     if (resultData.getBoolean(FirebaseServices.UPLOAD_RESULT_DATA, false)){
                         Toast.makeText(context, R.string.main_toast_upload_success, Toast.LENGTH_SHORT).show();
+                        uploadPd.dismiss();
                     }else{
                         Toast.makeText(context, R.string.main_toast_upload_fail, Toast.LENGTH_SHORT).show();
+                        uploadPd.dismiss();
                     }
                     break;
                 }

@@ -47,4 +47,5 @@
     <string name="main_toast_remove_fail">File removal failed</string>
     <string name="main_toast_copied">Copied to clipboard</string>
     <string name="main_clipboard_link">Ezpz shareable</string>
+    <string name="main_progressDialog_uploading">Upload&#8230;</string>
 </resources>
