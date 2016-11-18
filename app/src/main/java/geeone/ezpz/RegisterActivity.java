@@ -18,11 +18,15 @@ import android.widget.Toast;
 
 public class RegisterActivity extends AppCompatActivity {
 
+    private final int FIELDS_OK = 0;
+    private final int PASSWORD_NOT_MATCHING = 1;
+    private final int EMPTY_FIELD = 2;
+
     private FirebaseServices mService;
     private ServiceConnection mConnection;
     private boolean mBound = false;
 
-    private EditText mEmail, mPassword;
+    private EditText mEmail, mPassword, mConfirmedPassword;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,7 +57,7 @@ public class RegisterActivity extends AppCompatActivity {
 
         mEmail = (EditText) findViewById(R.id.editText_register_email);
         mPassword = (EditText) findViewById(R.id.editText_register_password);
-
+        mConfirmedPassword  = (EditText) findViewById(R.id.editText_register_confirmedPassword);
         //  checks if phone is rooted
         if (!RootChecker.isDeviceRooted()){
             if (!mBound){
@@ -99,10 +103,24 @@ public class RegisterActivity extends AppCompatActivity {
     @SuppressWarnings("UnusedParameters")
     public void register(View v){
         if (mBound){
-            if (validate()){
-                String email = mEmail.getText().toString();
-                String password = mPassword.getText().toString();
-                mService.register(email, password, new RegistrationResultReceiver(this, new Handler()));
+            switch(validate()){
+                case FIELDS_OK:{
+                    String email = mEmail.getText().toString();
+                    String password = mPassword.getText().toString();
+                    mService.register(email, password, new RegistrationResultReceiver(this, new Handler()));
+                    break;
+                }
+                case PASSWORD_NOT_MATCHING:{
+                    Toast.makeText(this, R.string.register_toast_registration_passwordNotMatching, Toast.LENGTH_SHORT).show();
+                    break;
+                }
+                case EMPTY_FIELD:{
+                    Toast.makeText(this, R.string.register_toast_registration_emptyFields, Toast.LENGTH_SHORT).show();
+                    break;
+                }
+                default:{
+                    //  do nothing
+                }
             }
         }
     }
@@ -128,20 +146,27 @@ public class RegisterActivity extends AppCompatActivity {
     /*
         description: simple validation
      */
-    private boolean validate(){
-        String email = null, password = null;
+    private int validate(){
+        String email = null, password = null, confirmedPassword = null;
         if (mEmail != null){
             email = mEmail.getText().toString();
         }
         if (mPassword != null){
             password = mPassword.getText().toString();
         }
-        if (email != null && password != null){
-            if (email.length() > 0 && password.length() > 0){
-                return true;
+        if (mConfirmedPassword != null){
+            confirmedPassword = mConfirmedPassword.getText().toString();
+        }
+        if (email != null && password != null && confirmedPassword != null){
+            if (email.length() > 0 && password.length() > 0 && confirmedPassword.length() > 0){
+                if (password.equals(confirmedPassword)){
+                    return FIELDS_OK;
+                }else{
+                    return PASSWORD_NOT_MATCHING;
+                }
             }
         }
-        return false;
+        return EMPTY_FIELD;
     }
 
     /*

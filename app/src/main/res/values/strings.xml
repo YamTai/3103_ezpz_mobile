@@ -18,8 +18,13 @@
     <string name="login_toast_login_success">Logged in</string>
     <string name="login_toast_login_fail">Login failed</string>
     <string name="login_textView_signUp">Sign up for new account</string>
+    <string name="register_emailHint">@string/login_emailHint</string>
+    <string name="register_passwordHint">@string/login_passwordHint</string>
+    <string name="register_confirmedPasswordHint">Confirm password</string>
     <string name="register_toast_registration_success">Registration successful</string>
     <string name="register_toast_registration_failed">Registration failed</string>
+    <string name="register_toast_registration_passwordNotMatching">Password does not match</string>
+    <string name="register_toast_registration_emptyFields">Please fill all fields</string>
     <string name="main_title">File List</string>
     <string name="main_shareDialog_title">Share</string>
     <string name="main_shareConfigDialog_title">Share Configuration</string>
