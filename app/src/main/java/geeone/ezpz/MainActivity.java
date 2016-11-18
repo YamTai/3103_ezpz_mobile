@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<FileMetadata> mFileMetadataList;
     private FileListViewAdapter mAdapter;
     private ProgressDialog uploadPd;
+    private int pdTimeout = 20000;  //20 seconds progress dialog timeout
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -131,6 +132,15 @@ public class MainActivity extends AppCompatActivity {
         uploadPd.setCancelable(false);
         uploadPd.setMessage(getString(R.string.main_progressDialog_uploading));
         uploadPd.show();
+        //  provides timeout for progress dialog
+        new Handler().postDelayed(new Runnable() {
+            public void run() {
+                if (uploadPd.isShowing()){
+                    uploadPd.dismiss();
+                    Toast.makeText(MainActivity.this, R.string.main_toast_upload_fail, Toast.LENGTH_SHORT).show();
+                }
+            }
+        }, pdTimeout);
     }
 
     /*
