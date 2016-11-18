@@ -10,6 +10,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
@@ -226,6 +227,7 @@ public class MainActivity extends AppCompatActivity {
             TextView name = (TextView) convertView.findViewById(R.id.textView_fileName);
             TextView fileMetadata = (TextView) convertView.findViewById(R.id.textView_fileMeta);
             ImageView delete = (ImageView) convertView.findViewById(R.id.imageView_delete);
+            delete.setColorFilter(Color.GRAY);
 
             FileMetadata item = fileList.get(position);
             if (item != null) {
