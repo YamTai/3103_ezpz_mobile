@@ -60,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
         mAdapter = new FileListViewAdapter(this, mFileMetadataList, R.layout.file_listview_item);
         mFileList.setAdapter(mAdapter);
 
+        //  service connection to FirebaseServices
         mConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
@@ -73,6 +74,8 @@ public class MainActivity extends AppCompatActivity {
                 mBound = false;
             }
         };
+
+        //  checks permission for api level >=23
         if (needsPermission()){
             readExtStoragePermission = checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE);
         }
@@ -81,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart(){
         super.onStart();
+        //  binds activity to FirebaseService
         if (!mBound){
             Intent i = new Intent(this, FirebaseServices.class);
             startService(i);
@@ -88,6 +92,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
+    /*
+        description: opens gallery for image selection for upload. executes when upload FAB is pressed.
+    */
     @SuppressWarnings("UnusedParameters")
     public void upload(View v){
         if (needsPermission()){
@@ -103,14 +111,24 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /*
+        description: fetches list of files from Firebase database
+    */
     private void fetchList(){
         mService.startMetadataListener(new MainReceiver(this, new Handler()));
     }
 
+    /*
+        description: uploads selected image to Firebase storage using image's uri
+     */
     private void upload(Uri imageUri, boolean removeOnDC){
         mService.upload(imageUri, removeOnDC, new MainReceiver(this, new Handler()));
     }
 
+    /*
+        description: checks if device requires runtime permission (api >= 23)
+        returns: true if api level >=23, else false
+     */
     private boolean needsPermission(){
         return android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
     }
@@ -121,6 +139,9 @@ public class MainActivity extends AppCompatActivity {
         mService.logout();
     }
 
+    /*
+        description: callback method for image gallery, returns image uri of selected image
+     */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == Activity.RESULT_OK) {
@@ -156,6 +177,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /*
+        description: callback method of permission request
+     */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
         switch (requestCode) {
@@ -171,6 +195,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /*
+        description: custom listview adapter
+     */
     private class FileListViewAdapter extends BaseAdapter{
         private final Context context;
         private final ArrayList<FileMetadata> fileList;
@@ -272,6 +299,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /*
+        description: custom resultreceiver for receiving results from FirebaseServices
+     */
     private class MainReceiver extends ResultReceiver {
         private final Context context;
         private MainReceiver(Context c, Handler h){

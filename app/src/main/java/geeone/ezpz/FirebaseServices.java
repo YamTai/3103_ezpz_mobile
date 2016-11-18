@@ -88,6 +88,7 @@ public class FirebaseServices extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
+        //  checks if device is rooted
         if (!RootChecker.isDeviceRooted()){
             mAuth = FirebaseAuth.getInstance();
             mDatabaseRef = FirebaseDatabase.getInstance().getReference().child(DB_ROOT);
@@ -118,6 +119,10 @@ public class FirebaseServices extends Service {
         }
     }
 
+    /*
+        description: creates new account in Firebase
+        parameter: email, password, resultreceiver for returning result of registration
+     */
     public void register(String email, String password, ResultReceiver rr){
         mResultReceiver = rr;
         if (mAuth != null){
@@ -138,6 +143,10 @@ public class FirebaseServices extends Service {
         }
     }
 
+    /*
+        description: authenticate credentials with Firebase
+        parameter: email, password, resultreceiver for returning result of authentication
+     */
     public void authenticate(String email, String password, ResultReceiver rr){
         mResultReceiver = rr;
         if (mAuth != null){
@@ -166,6 +175,10 @@ public class FirebaseServices extends Service {
         }
     }
 
+    /*
+        description: uploads images (via uri) to Firebase storage, then updates Firebase database (add record)
+        parameter: image's uri, delete on disconnection bool, resultreceiver for returning result of upload
+     */
     public void upload(Uri imageUri, boolean deleteOnDC, ResultReceiver rr) {
         final boolean deleteOnDisconnect = deleteOnDC;
         mResultReceiver = rr;
@@ -177,13 +190,16 @@ public class FirebaseServices extends Service {
                 uTask.addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
+                        //  if upload task fails
                         result.putBoolean(UPLOAD_RESULT_DATA, false);
                         mResultReceiver.send(UPLOAD_RESULT_CODE, result);
                     }
                 }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                        //  if upload task succeeds
                     if (mDatabaseRef != null){
+                        //  updates database
                         final DatabaseReference dRef = mDatabaseRef.child(DB_FILES).child(sRef.getName());
                         sRef.getMetadata().addOnSuccessListener(new OnSuccessListener<StorageMetadata>() {
                             @Override
@@ -208,6 +224,10 @@ public class FirebaseServices extends Service {
         }
     }
 
+    /*
+        description: deletes file from Firebase storage, then updates Firebase database (remove record)
+        parameter: file name to delete, resultreceiver for returning result of deletion
+     */
     public void delete(@NonNull String fileName, ResultReceiver rr){
         final String toDelete = fileName;
         mResultReceiver = rr;
@@ -217,13 +237,16 @@ public class FirebaseServices extends Service {
             sRef.delete().addOnFailureListener(new OnFailureListener() {
                 @Override
                 public void onFailure(@NonNull Exception e) {
+                    //  if deletion fails
                     result.putBoolean(DELETE_RESULT_DATA, false);
                     mResultReceiver.send(DELETE_RESULT_CODE, result);
                 }
             }).addOnSuccessListener(new OnSuccessListener<Void>() {
                 @Override
                 public void onSuccess(Void aVoid) {
+                    //  if deletion succeeds
                     if (mDatabaseRef != null) {
+                        //  updates database
                         DatabaseReference dRef = mDatabaseRef.child(DB_FILES).child(toDelete);
                         dRef.removeValue();
                         log(ACTION_DELETE, toDelete);
@@ -235,6 +258,9 @@ public class FirebaseServices extends Service {
         }
     }
 
+    /*
+        description: disconncts user and stops FirebaseServices
+     */
     public void logout(){
         setPresence(false);
         log(ACTION_DISCONNECT, null);
@@ -244,6 +270,10 @@ public class FirebaseServices extends Service {
         stopSelf();
     }
 
+    /*
+        description: writes to database logs
+        parameter: action taken by user, file name (if required)
+     */
     private void log(@NonNull String action, String fileName){
         if (mDatabaseRef != null){
             DatabaseReference dRef = mDatabaseRef.child(DB_LOGS).push();
@@ -256,6 +286,10 @@ public class FirebaseServices extends Service {
         }
     }
 
+    /*
+        description: sets user status in Firebase database (online/offline)
+        parameter: user status (online/offline)
+     */
     private void setPresence(boolean online){
         if (mDatabaseRef != null){
             DatabaseReference dRef = mDatabaseRef.child(DB_PRESENCE);
@@ -263,6 +297,10 @@ public class FirebaseServices extends Service {
         }
     }
 
+    /*
+        description: listener for updating user's list of files currently being shared
+        parameter: resultreceiver for returning list of files
+     */
     public void startMetadataListener(ResultReceiver rr){
         mResultReceiver = rr;
         DatabaseReference dRef = mDatabaseRef.child(DB_FILES);

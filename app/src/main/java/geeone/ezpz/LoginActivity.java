@@ -29,6 +29,7 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
         setTitle(R.string.login_title);
 
+        //  service connection to FirebaseServices
         mConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
@@ -49,6 +50,7 @@ public class LoginActivity extends AppCompatActivity {
         mEmail = (EditText) findViewById(R.id.editText_login_email);
         mPassword = (EditText) findViewById(R.id.editText_login_password);
 
+        //  checks if phone is rooted
         if (!RootChecker.isDeviceRooted()){
             if (!mBound){
                 Intent i = new Intent(this, FirebaseServices.class);
@@ -89,6 +91,9 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
+    /*
+        description: simple validation
+     */
     private boolean validate(){
         String email = null, password = null;
         if (mEmail != null){
@@ -105,6 +110,9 @@ public class LoginActivity extends AppCompatActivity {
         return false;
     }
 
+    /*
+        description: custom resultreceiver for receiving results from FirebaseServices
+     */
     private class LoginResultReceiver extends ResultReceiver{
         private final Context context;
         private LoginResultReceiver(Context c, Handler h){
