@@ -23,7 +23,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -225,7 +225,7 @@ public class MainActivity extends AppCompatActivity {
             }
             TextView name = (TextView) convertView.findViewById(R.id.textView_fileName);
             TextView fileMetadata = (TextView) convertView.findViewById(R.id.textView_fileMeta);
-            Button delete = (Button) convertView.findViewById(R.id.button_delete);
+            ImageView delete = (ImageView) convertView.findViewById(R.id.imageView_delete);
 
             FileMetadata item = fileList.get(position);
             if (item != null) {
