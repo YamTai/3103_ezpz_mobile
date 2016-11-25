@@ -42,7 +42,7 @@ public class RootChecker {
             }
             if (in != null){
                 try{
-                    in.close();
+                    in.close(); //  b-01
                 }catch(IOException e){
                     e.printStackTrace();
                 }

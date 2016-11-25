@@ -81,13 +81,8 @@ public class RegisterActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:{
-                goToLogin();
-            }
-            default:{
-                //  do nothing
-            }
+        if (item.getItemId() == android.R.id.home){ //  b-04
+            goToLogin();
         }
         return super.onOptionsItemSelected(item);
     }
