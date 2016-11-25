@@ -2,6 +2,7 @@ package geeone.ezpz;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
 
 /** @author Kevin Kowalewski */
@@ -28,14 +29,25 @@ public class RootChecker {
 
     private static boolean checkRootMethod3() {
         Process process = null;
+        BufferedReader in = null;
         try {
             process = Runtime.getRuntime().exec(new String[] { "/system/xbin/which", "su" });
-            BufferedReader in = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            in = new BufferedReader(new InputStreamReader(process.getInputStream()));
             return (in.readLine() != null);
         } catch (Throwable t) {
             return false;
         } finally {
-            if (process != null) process.destroy();
+            if (process != null){
+                process.destroy();
+            }
+            if (in != null){
+                try{
+                    in.close();
+                }catch(IOException e){
+                    e.printStackTrace();
+                }
+
+            }
         }
     }
 }
