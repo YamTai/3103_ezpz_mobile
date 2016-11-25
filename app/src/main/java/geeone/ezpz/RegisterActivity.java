@@ -85,7 +85,7 @@ public class RegisterActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == android.R.id.home){ //  b-04
+        if (item.getItemId() == android.R.id.home){ //  B-05
             goToLogin();
         }
         return super.onOptionsItemSelected(item);
@@ -167,7 +167,7 @@ public class RegisterActivity extends AppCompatActivity {
             email = mEmail.getText().toString();
             if (email.length() > 110){
                 return EMAIL_TOO_LONG;
-            }else if (!email.matches("[a-z,A-Z,0-9,!#$%&'*+-/=?^_`{|}~]{2,50}@[a-zA-Z]{2,50}\\.+[a-zA-Z]{2,5}(\\.[a-zA-Z]{2,5})?")){
+            }else if (!email.matches("[a-z,A-Z,0-9,!#$%&'*+-/=?^_`{|}~]{2,50}@[a-zA-Z]{2,50}\\.+[a-zA-Z]{2,5}(\\.[a-zA-Z]{2,5})?")){    //  B-02
                 return EMAIL_FORMAT_ERROR;
             }
         }
@@ -175,7 +175,7 @@ public class RegisterActivity extends AppCompatActivity {
             password = mPassword.getText().toString();
             if (password.length() > 30){
                 return PASSWORD_TOO_LONG;
-            }else if (!password.matches("(?=.*[A-Za-z!@#$%^&*])(?=.*\\d)[A-Za-z!@#$%^&*\\d]{7,30}")){
+            }else if (!password.matches("(?=.*[A-Za-z!@#$%^&*])(?=.*\\d)[A-Za-z!@#$%^&*\\d]{7,30}")){   //  B-02
                 return PASSWORD_FORMAT_ERROR;
             }
         }

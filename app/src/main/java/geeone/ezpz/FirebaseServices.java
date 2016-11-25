@@ -194,7 +194,7 @@ public class FirebaseServices extends Service {
                 }else{
                     String[] fileNameSplit = actualName.split("\\.");
                     if (fileNameSplit[0] != null){
-                        actualName = fileNameSplit[0] + "_" + String.valueOf(System.currentTimeMillis());
+                        actualName = fileNameSplit[0] + "_" + String.valueOf(System.currentTimeMillis());   //  B-01
                     }else{
                         result.putBoolean(UPLOAD_RESULT_DATA, false);
                         mResultReceiver.send(UPLOAD_RESULT_CODE, result);

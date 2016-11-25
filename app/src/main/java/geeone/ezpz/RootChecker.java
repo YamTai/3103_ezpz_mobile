@@ -32,7 +32,7 @@ public class RootChecker {
         BufferedReader in = null;
         try {
             process = Runtime.getRuntime().exec(new String[] { "/system/xbin/which", "su" });
-            in = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8"));  //b-06
+            in = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8"));  //  B-07
             return (in.readLine() != null);
         } catch (Throwable t) {
             return false;
@@ -42,7 +42,7 @@ public class RootChecker {
             }
             if (in != null){
                 try{
-                    in.close(); //  b-01
+                    in.close(); //  b-04
                 }catch(IOException e){
                     e.printStackTrace();
                 }
