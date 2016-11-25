@@ -32,7 +32,7 @@ public class RootChecker {
         BufferedReader in = null;
         try {
             process = Runtime.getRuntime().exec(new String[] { "/system/xbin/which", "su" });
-            in = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            in = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8"));  //b-06
             return (in.readLine() != null);
         } catch (Throwable t) {
             return false;
