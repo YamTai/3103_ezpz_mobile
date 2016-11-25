@@ -42,6 +42,13 @@
             android:ems="10"
             android:id="@+id/editText_register_password"/>
 
+        <TextView
+            android:text="@string/register_textView_registration_passwordRequirement"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="10sp"
+            android:textAlignment="center" />
+
         <EditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

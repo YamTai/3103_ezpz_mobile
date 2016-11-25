@@ -21,6 +21,10 @@ public class RegisterActivity extends AppCompatActivity {
     private final int FIELDS_OK = 0;
     private final int PASSWORD_NOT_MATCHING = 1;
     private final int EMPTY_FIELD = 2;
+    private final int EMAIL_FORMAT_ERROR = 3;
+    private final int PASSWORD_FORMAT_ERROR = 4;
+    private final int EMAIL_TOO_LONG = 5;
+    private final int PASSWORD_TOO_LONG = 6;
 
     private FirebaseServices mService;
     private ServiceConnection mConnection;
@@ -113,6 +117,22 @@ public class RegisterActivity extends AppCompatActivity {
                     Toast.makeText(this, R.string.register_toast_registration_emptyFields, Toast.LENGTH_SHORT).show();
                     break;
                 }
+                case EMAIL_FORMAT_ERROR:{
+                    Toast.makeText(this, R.string.register_toast_registration_emailFormatError, Toast.LENGTH_SHORT).show();
+                    break;
+                }
+                case PASSWORD_FORMAT_ERROR:{
+                    Toast.makeText(this, R.string.register_toast_registration_passwordFormatError, Toast.LENGTH_SHORT).show();
+                    break;
+                }
+                case EMAIL_TOO_LONG:{
+                    Toast.makeText(this, R.string.register_toast_registration_emailTooLong, Toast.LENGTH_SHORT).show();
+                    break;
+                }
+                case PASSWORD_TOO_LONG:{
+                    Toast.makeText(this, R.string.register_toast_registration_passwordTooLong, Toast.LENGTH_SHORT).show();
+                    break;
+                }
                 default:{
                     //  do nothing
                 }
@@ -145,9 +165,19 @@ public class RegisterActivity extends AppCompatActivity {
         String email = null, password = null, confirmedPassword = null;
         if (mEmail != null){
             email = mEmail.getText().toString();
+            if (email.length() > 110){
+                return EMAIL_TOO_LONG;
+            }else if (!email.matches("[a-z,A-Z,0-9,!#$%&'*+-/=?^_`{|}~]{2,50}@[a-zA-Z]{2,50}\\.+[a-zA-Z]{2,5}(\\.[a-zA-Z]{2,5})?")){
+                return EMAIL_FORMAT_ERROR;
+            }
         }
         if (mPassword != null){
             password = mPassword.getText().toString();
+            if (password.length() > 30){
+                return PASSWORD_TOO_LONG;
+            }else if (!password.matches("(?=.*[A-Za-z!@#$%^&*])(?=.*\\d)[A-Za-z!@#$%^&*\\d]{7,30}")){
+                return PASSWORD_FORMAT_ERROR;
+            }
         }
         if (mConfirmedPassword != null){
             confirmedPassword = mConfirmedPassword.getText().toString();

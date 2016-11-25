@@ -25,6 +25,11 @@
     <string name="register_toast_registration_failed">Registration failed</string>
     <string name="register_toast_registration_passwordNotMatching">Password does not match</string>
     <string name="register_toast_registration_emptyFields">Please fill all fields</string>
+    <string name="register_toast_registration_emailFormatError">Invalid email</string>
+    <string name="register_toast_registration_passwordFormatError">Please use a stronger password</string>
+    <string name="register_toast_registration_emailTooLong">Email too long</string>
+    <string name="register_toast_registration_passwordTooLong">Password too long</string>
+    <string name="register_textView_registration_passwordRequirement">7&#8211;30 characters, must contain at least 1 number and 1 letter</string>
     <string name="main_title">File List</string>
     <string name="main_shareDialog_title">Share</string>
     <string name="main_shareConfigDialog_title">Share Configuration</string>

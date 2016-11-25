@@ -84,6 +84,8 @@ public class LoginActivity extends AppCompatActivity {
         if (mBound){
             if (validate()) {
                 mService.authenticate(mEmail.getText().toString(), mPassword.getText().toString(), new LoginResultReceiver(this, new Handler()));
+            }else{
+                Toast.makeText(this, R.string.login_toast_login_fail, Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -106,7 +108,7 @@ public class LoginActivity extends AppCompatActivity {
             password = mPassword.getText().toString();
         }
         if (email != null && password != null){
-            if (email.length() > 0 && password.length() > 0){
+            if (email.length() > 0 && password.length() > 0 && email.length() <= 110 && password.length() <= 30){
                 return true;
             }
         }
