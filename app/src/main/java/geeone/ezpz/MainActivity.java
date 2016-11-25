@@ -50,6 +50,8 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<FileMetadata> mFileMetadataList;
     private FileListViewAdapter mAdapter;
     private ProgressDialog uploadPd;
+    private Handler timeoutHandler;
+    private Runnable timeoutRunnable;
     private int pdTimeout = 20000;  //20 seconds progress dialog timeout
 
     @Override
@@ -133,14 +135,16 @@ public class MainActivity extends AppCompatActivity {
         uploadPd.setMessage(getString(R.string.main_progressDialog_uploading));
         uploadPd.show();
         //  provides timeout for progress dialog
-        new Handler().postDelayed(new Runnable() {
+        timeoutHandler = new Handler();
+        timeoutRunnable = new Runnable() {
             public void run() {
-                if (uploadPd.isShowing()){
+                if (uploadPd.isShowing()) {
                     uploadPd.dismiss();
                     Toast.makeText(MainActivity.this, R.string.main_toast_upload_fail, Toast.LENGTH_SHORT).show();
                 }
             }
-        }, pdTimeout);
+        };
+        timeoutHandler.postDelayed(timeoutRunnable, pdTimeout);
     }
 
     /*
@@ -333,6 +337,7 @@ public class MainActivity extends AppCompatActivity {
                 case FirebaseServices.UPLOAD_RESULT_CODE:{
                     if (resultData.getBoolean(FirebaseServices.UPLOAD_RESULT_DATA, false)){
                         Toast.makeText(context, R.string.main_toast_upload_success, Toast.LENGTH_SHORT).show();
+                        timeoutHandler.removeCallbacks(timeoutRunnable);
                         uploadPd.dismiss();
                     }else{
                         Toast.makeText(context, R.string.main_toast_upload_fail, Toast.LENGTH_SHORT).show();

@@ -5,6 +5,7 @@ import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
@@ -182,11 +183,26 @@ public class FirebaseServices extends Service {
     public void upload(Uri imageUri, boolean deleteOnDC, ResultReceiver rr) {
         final boolean deleteOnDisconnect = deleteOnDC;
         mResultReceiver = rr;
+        final Bundle result = new Bundle();
         if (mStorageRef != null){
             if (imageUri != null){
-                final StorageReference sRef = mStorageRef.child(imageUri.getLastPathSegment());
+                String actualName = getNameFromUri(imageUri);
+                if (actualName == null){
+                    result.putBoolean(UPLOAD_RESULT_DATA, false);
+                    mResultReceiver.send(UPLOAD_RESULT_CODE, result);
+                    return;
+                }else{
+                    String[] fileNameSplit = actualName.split("\\.");
+                    if (fileNameSplit[0] != null){
+                        actualName = fileNameSplit[0] + "_" + String.valueOf(System.currentTimeMillis());
+                    }else{
+                        result.putBoolean(UPLOAD_RESULT_DATA, false);
+                        mResultReceiver.send(UPLOAD_RESULT_CODE, result);
+                        return;
+                    }
+                }
+                final StorageReference sRef = mStorageRef.child(actualName);
                 UploadTask uTask = sRef.putFile(imageUri);
-                final Bundle result = new Bundle();
                 uTask.addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
@@ -222,6 +238,16 @@ public class FirebaseServices extends Service {
                 });
             }
         }
+    }
+
+    /*
+        description: get image's file name from uri
+        parameter: image uri
+     */
+    private String getNameFromUri(Uri imageUri){
+        Cursor c = getContentResolver().query(imageUri, null, null, null, null);
+        c.moveToFirst();
+        return c.getString(3);
     }
 
     /*
