@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.ResultReceiver;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -194,6 +195,7 @@ public class FirebaseServices extends Service {
         if (mStorageRef != null){
             if (imageUri != null){
                 long size = getSizeFromUri(imageUri);
+                Log.d("SIZE", String.valueOf(size));
                 if (size > DEFAULT_SIZE_LIMIT){
                     result.putInt(UPLOAD_RESULT_DATA, UPLOAD_RESULT_FILESIZE_TOO_BIG);
                     mResultReceiver.send(UPLOAD_RESULT_CODE, result);
