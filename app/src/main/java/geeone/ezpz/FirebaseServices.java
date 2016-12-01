@@ -55,6 +55,8 @@ public class FirebaseServices extends Service {
     public static final String METADATA_FETCH_RESULT_DATA = "geeone.ezpz.METADATA_FETCH_RESULT_DATA";
     public static final int DELETE_RESULT_CODE = 4;
     public static final String DELETE_RESULT_DATA = "geeone.ezpz.DELETE_RESULT_DATA";
+    public static final int UPLOAD_RESULT_FAILED = 0, UPLOAD_RESULT_SUCCESS = -1;
+    public static final int UPLOAD_RESULT_INVALID_NAME = 1, UPLOAD_RESULT_FILESIZE_TOO_BIG = 2, UPLOAD_RESULT_STORAGE_LIMIT_REACHED = 3;
 
     //  firebase bucket stuff
     private final String BUCKET_REF = "gs://ezpz-23b89.appspot.com";
@@ -63,6 +65,7 @@ public class FirebaseServices extends Service {
     private final String DB_FILES = "files";
     private final String DB_LOGS = "logs";
     private final String DB_PRESENCE = "presence";
+    private final String DB_LIMIT = "limit";
     private final String ACTION_CONNECT = "connect";
     private final String ACTION_DISCONNECT = "disconnect";
     private final String ACTION_CREATE = "create";
@@ -78,6 +81,10 @@ public class FirebaseServices extends Service {
     private FirebaseStorage mStorage;
     private DatabaseReference mDatabaseRef;
     private StorageReference mStorageRef;
+
+    private long currentSize, limit;
+    private final long DEFAULT_LIMIT = 10000000;        //  10MB
+    private final long DEFAULT_SIZE_LIMIT = 5000000;    //  5MB
 
     private Map<String, Object> fileMetadata;
 
@@ -186,9 +193,20 @@ public class FirebaseServices extends Service {
         final Bundle result = new Bundle();
         if (mStorageRef != null){
             if (imageUri != null){
+                long size = getSizeFromUri(imageUri);
+                if (size > DEFAULT_SIZE_LIMIT){
+                    result.putInt(UPLOAD_RESULT_DATA, UPLOAD_RESULT_FILESIZE_TOO_BIG);
+                    mResultReceiver.send(UPLOAD_RESULT_CODE, result);
+                    return;
+                }
+                if (currentSize + size > limit){
+                    result.putInt(UPLOAD_RESULT_DATA, UPLOAD_RESULT_STORAGE_LIMIT_REACHED);
+                    mResultReceiver.send(UPLOAD_RESULT_CODE, result);
+                    return;
+                }
                 String actualName = getNameFromUri(imageUri);
                 if (actualName == null){
-                    result.putBoolean(UPLOAD_RESULT_DATA, false);
+                    result.putInt(UPLOAD_RESULT_DATA, UPLOAD_RESULT_INVALID_NAME);
                     mResultReceiver.send(UPLOAD_RESULT_CODE, result);
                     return;
                 }else{
@@ -196,7 +214,7 @@ public class FirebaseServices extends Service {
                     if (fileNameSplit[0] != null){
                         actualName = fileNameSplit[0] + "_" + String.valueOf(System.currentTimeMillis());   //  B-01
                     }else{
-                        result.putBoolean(UPLOAD_RESULT_DATA, false);
+                        result.putInt(UPLOAD_RESULT_DATA, UPLOAD_RESULT_INVALID_NAME);
                         mResultReceiver.send(UPLOAD_RESULT_CODE, result);
                         return;
                     }
@@ -207,7 +225,7 @@ public class FirebaseServices extends Service {
                     @Override
                     public void onFailure(@NonNull Exception e) {
                         //  if upload task fails
-                        result.putBoolean(UPLOAD_RESULT_DATA, false);
+                        result.putInt(UPLOAD_RESULT_DATA, UPLOAD_RESULT_FAILED);
                         mResultReceiver.send(UPLOAD_RESULT_CODE, result);
                     }
                 }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
@@ -232,7 +250,7 @@ public class FirebaseServices extends Service {
                             }
                         });
                     }
-                    result.putBoolean(UPLOAD_RESULT_DATA, true);
+                    result.putInt(UPLOAD_RESULT_DATA, UPLOAD_RESULT_SUCCESS);
                     mResultReceiver.send(UPLOAD_RESULT_CODE, result);
                     }
                 });
@@ -245,9 +263,29 @@ public class FirebaseServices extends Service {
         parameter: image uri
      */
     private String getNameFromUri(Uri imageUri){
+        String result = null;
         Cursor c = getContentResolver().query(imageUri, null, null, null, null);
-        c.moveToFirst();
-        return c.getString(3);
+        if (c != null){
+            c.moveToFirst();
+            result = c.getString(3);
+            c.close();
+        }
+        return result;
+    }
+
+    /*
+        description: get image's size from uri
+        parameter: image uri
+    */
+    private long getSizeFromUri(Uri imageUri){
+        long result = 0;
+        Cursor c = getContentResolver().query(imageUri, null, null, null, null);
+        if (c != null) {
+            c.moveToFirst();
+            result = c.getLong(2);
+            c.close();
+        }
+        return result;
     }
 
     /*
@@ -320,6 +358,22 @@ public class FirebaseServices extends Service {
         if (mDatabaseRef != null){
             DatabaseReference dRef = mDatabaseRef.child(DB_PRESENCE);
             dRef.setValue(online);
+            if (online){
+                final DatabaseReference lRef = mDatabaseRef.child(DB_LIMIT);
+                lRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (dataSnapshot.getValue() == null){
+                            lRef.setValue(DEFAULT_LIMIT);
+                        }else{
+                            limit = (long)dataSnapshot.getValue();
+                        }
+                    }
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                    }
+                });
+            }
         }
     }
 
@@ -337,6 +391,7 @@ public class FirebaseServices extends Service {
                 fileMetadata = (Map<String, Object>) dataSnapshot.getValue();
                 ArrayList<FileMetadata> resultPayload = new ArrayList<>();
                 Bundle result = new Bundle();
+                currentSize = 0;
                 if (fileMetadata != null){
                     for(Object o : fileMetadata.values()){
                         Map<String, Object> m = (Map<String, Object>) o;
@@ -345,6 +400,7 @@ public class FirebaseServices extends Service {
                         String downloadUrl = (String) m.get(FileMetadata.URL);
                         String storageDirectory = (String) m.get(FileMetadata.DIRECTORY);
                         Long size = (Long) m.get(FileMetadata.SIZE);
+                        currentSize += size;
                         boolean deleteOnDisconnect = (boolean) m.get(FileMetadata.DELETE_ON_DC);
                         if ((fileName != null) && (fileType != null) && (downloadUrl != null) && (size > 0)){
                             FileMetadata fm = new FileMetadata(fileName, fileType, downloadUrl, storageDirectory, size, deleteOnDisconnect);

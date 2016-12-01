@@ -335,14 +335,33 @@ public class MainActivity extends AppCompatActivity {
         public void onReceiveResult(int resultCode, Bundle resultData) {
             switch(resultCode){
                 case FirebaseServices.UPLOAD_RESULT_CODE:{
-                    if (resultData.getBoolean(FirebaseServices.UPLOAD_RESULT_DATA, false)){
-                        Toast.makeText(context, R.string.main_toast_upload_success, Toast.LENGTH_SHORT).show();
-                        timeoutHandler.removeCallbacks(timeoutRunnable);
-                        uploadPd.dismiss();
-                    }else{
-                        Toast.makeText(context, R.string.main_toast_upload_fail, Toast.LENGTH_SHORT).show();
-                        uploadPd.dismiss();
+                    //to do change to switch int
+                    switch(resultData.getInt(FirebaseServices.UPLOAD_RESULT_DATA)){
+                        case FirebaseServices.UPLOAD_RESULT_SUCCESS:{
+                            Toast.makeText(context, R.string.main_toast_upload_success, Toast.LENGTH_SHORT).show();
+                            timeoutHandler.removeCallbacks(timeoutRunnable);
+                            break;
+                        }
+                        case FirebaseServices.UPLOAD_RESULT_FAILED:{
+                            Toast.makeText(context, R.string.main_toast_upload_fail, Toast.LENGTH_SHORT).show();
+                            break;
+                        }
+                        case FirebaseServices.UPLOAD_RESULT_INVALID_NAME:{
+                            break;
+                        }
+                        case FirebaseServices.UPLOAD_RESULT_FILESIZE_TOO_BIG:{
+                            Toast.makeText(context, R.string.main_toast_upload_fail_fileSizeLimit, Toast.LENGTH_SHORT).show();
+                            break;
+                        }
+                        case FirebaseServices.UPLOAD_RESULT_STORAGE_LIMIT_REACHED:{
+                            Toast.makeText(context, R.string.main_toast_upload_fail_storageLimit, Toast.LENGTH_SHORT).show();
+                            break;
+                        }
+                        default:{
+                            //do nothing
+                        }
                     }
+                    uploadPd.dismiss();
                     break;
                 }
                 case FirebaseServices.METADATA_FETCH_RESULT_CODE:{

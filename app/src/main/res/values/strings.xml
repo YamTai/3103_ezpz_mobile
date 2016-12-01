@@ -48,6 +48,8 @@
     <string name="main_toast_fetchList_fail">List fetch failed</string>
     <string name="main_toast_upload_success">Image uploaded</string>
     <string name="main_toast_upload_fail">Upload failed</string>
+    <string name="main_toast_upload_fail_fileSizeLimit">File too big</string>
+    <string name="main_toast_upload_fail_storageLimit">Storage limit reached</string>
     <string name="main_toast_remove_success">File removed</string>
     <string name="main_toast_remove_fail">File removal failed</string>
     <string name="main_toast_copied">Copied to clipboard</string>
